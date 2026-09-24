@@ -5,88 +5,33 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+env:
+  GODOT_VERSION: 4.3
+  EXPORT_NAME: EchoBound_Riftborn
+
 jobs:
-  build:
+  export-android:
+    name: Android Export
     runs-on: ubuntu-latest
-    env:
-      ANDROID_HOME: /usr/local/lib/android/sdk
+    container:
+      image: barichello/godot-ci:4.3
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Setup Java (required for Android build tools)
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
-
-      - name: Download Godot headless export templates
+      - name: Move export templates into place
         run: |
-          GODOT_VERSION=4.3
-          wget https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip
-          unzip Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip
-          mv Godot_v${GODOT_VERSION}-stable_linux.x86_64 godot
-          chmod +x godot
-
-          wget https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_export_templates.tpz
-          mkdir -p ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
-          unzip Godot_v${GODOT_VERSION}-stable_export_templates.tpz -d /tmp/templates
-          mv /tmp/templates/templates/* ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable/
-
-      - name: Accept Android SDK licenses
-        run: |
-          mkdir -p "$ANDROID_HOME/licenses"
-          echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" > "$ANDROID_HOME/licenses/android-sdk-license"
-          echo "d56f5187479451eabf01fb78af6dfcb131a6481e" >> "$ANDROID_HOME/licenses/android-sdk-license"
-          echo "8933bad161af4178b1185d1a37fbf41ea5269c55" >> "$ANDROID_HOME/licenses/android-sdk-license"
-          echo "84831b9409646a918e30573bab4c9c91346d8abd" > "$ANDROID_HOME/licenses/android-sdk-preview-license"
-          echo "601085b94cd77f0b54ff86406957099ebe79c4d" > "$ANDROID_HOME/licenses/android-googletv-license"
-          echo "859f317696f67ef3d7f30a50a5560e7834b43903" > "$ANDROID_HOME/licenses/android-sdk-arm-dbt-license"
-          echo "33b6a2b64607f11b759f320ef9dfb25c9fea19a9d" > "$ANDROID_HOME/licenses/google-gdk-license"
-
-      - name: Install Android build tools & platform
-        run: |
-          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platform-tools" "platforms;android-34" "build-tools;34.0.0"
-
-      - name: Generate debug keystore
-        run: |
-          keytool -genkey -v -keystore "$HOME/debug.keystore" \
-            -storepass android -alias androiddebugkey \
-            -keypass android -keyalg RSA -keysize 2048 -validity 10000 \
-            -dname "CN=Android Debug,O=Android,C=US"
-
-      - name: Configure Godot editor settings for Android export
-        run: |
-          mkdir -p ~/.config/godot
-          cat > ~/.config/godot/editor_settings-4.tres << EOF
-          [gd_resource type="EditorSettings" format=3]
-
-          [resource]
-          export/android/android_sdk_path = "$ANDROID_HOME"
-          export/android/debug_keystore = "$HOME/debug.keystore"
-          export/android/debug_keystore_user = "androiddebugkey"
-          export/android/debug_keystore_pass = "android"
-          EOF
-
-      - name: Debug - inspect SDK and template contents
-        run: |
-          echo "--- ANDROID_HOME contents ---"
-          ls -la "$ANDROID_HOME" || echo "ANDROID_HOME missing"
-          echo "--- platform-tools ---"
-          ls -la "$ANDROID_HOME/platform-tools" || echo "platform-tools missing"
-          echo "--- build-tools ---"
-          ls -la "$ANDROID_HOME/build-tools" || echo "build-tools missing"
-          echo "--- export templates ---"
-          ls -la ~/.local/share/godot/export_templates/4.3.stable/ || echo "templates missing"
-          echo "--- editor settings file ---"
-          cat ~/.config/godot/editor_settings-4.tres
+          mkdir -v -p ~/.local/share/godot/export_templates
+          mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
 
       - name: Export Android APK
         run: |
-          ./godot --headless --verbose --export-debug "Android" EchoBound_Riftborn.apk --path .
+          mkdir -v -p build/android
+          godot --headless --verbose --export-debug "Android" ./build/android/${EXPORT_NAME}.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: EchoBound_Riftborn-apk
-          path: "*.apk"
+          path: build/android
