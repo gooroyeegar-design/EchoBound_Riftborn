@@ -436,10 +436,10 @@ func recover_energy():state.player.energy=min(state.player.max_energy,state.play
 func update_ui():
 	if ui.is_empty():return
 	var p=state.player
-	ui.level.text="LEVEL %d   •   %d / %d XP"%(int(p.level),int(p.xp),xp_required())
+	ui.level.text="LEVEL %d   •   %d / %d XP"%[int(p.level),int(p.xp),xp_required()]
 	ui.xp.max_value=xp_required();ui.xp.value=p.xp
 	ui.hp.max_value=p.max_hp;ui.hp.value=p.hp
-	ui.currency.text="🪙 %d   💎 %d   ⚡ %d/%d"%(int(p.gold),int(p.crystals),int(p.energy),int(p.max_energy))
+	ui.currency.text="🪙 %d   💎 %d   ⚡ %d/%d"%[int(p.gold),int(p.crystals),int(p.energy),int(p.max_energy)]
 	render_content()
 	if ui.has("toast") and toast_timer>0:ui.toast.visible=true
 
