@@ -1,0 +1,2 @@
+EchoBound: Riftborn project code in this package is provided to the purchaser/user for modification and commercial use.
+No third-party runtime art assets are bundled in this starter package.
