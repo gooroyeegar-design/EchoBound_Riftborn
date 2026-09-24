@@ -68,9 +68,22 @@ jobs:
           export/android/debug_keystore_pass = "android"
           EOF
 
+      - name: Debug - inspect SDK and template contents
+        run: |
+          echo "--- ANDROID_HOME contents ---"
+          ls -la "$ANDROID_HOME" || echo "ANDROID_HOME missing"
+          echo "--- platform-tools ---"
+          ls -la "$ANDROID_HOME/platform-tools" || echo "platform-tools missing"
+          echo "--- build-tools ---"
+          ls -la "$ANDROID_HOME/build-tools" || echo "build-tools missing"
+          echo "--- export templates ---"
+          ls -la ~/.local/share/godot/export_templates/4.3.stable/ || echo "templates missing"
+          echo "--- editor settings file ---"
+          cat ~/.config/godot/editor_settings-4.tres
+
       - name: Export Android APK
         run: |
-          ./godot --headless --export-debug "Android" EchoBound_Riftborn.apk --path .
+          ./godot --headless --verbose --export-debug "Android" EchoBound_Riftborn.apk --path .
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
